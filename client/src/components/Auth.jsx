@@ -2,7 +2,9 @@ import React, {useState} from 'react';
 import Cookies from 'universal-cookie';
 import axios from 'axios';
 
-import signinImage from '../assets/signup.jpg'
+import signinImage from '../assets/signup.jpg';
+
+const cookies = new Cookies();
 
 const initialState = {
     fullName: '',
@@ -20,13 +22,39 @@ const Auth = () => {
     const handleChange = (e) => {
         setForm( {...form, [e.target.name]: e.target.value });
     }
-    const handleSubmit = (e) => {
+
+    // fill the form, once submitted, handleSubmit works by 
+    // getting all the values from the form and url, post it to backend and get the data 
+    // store the data in the cookies
+
+    const handleSubmit = async(e) => {
         e.preventDefault();
-        console.log(form);
+        const {userName,password,phoneNumber,avatarURL} = form;
+        // console.log("inside the lick func",userName)
+        const URL = "http://localhost:5000/auth";
+        const {data: {token,userId,hashedPassword,fullName} } = await axios.post(`${URL}/${isSignup ? 'signup':'login'}`, {
+            userName,password,fullName:form.fullName,phoneNumber,avatarURL
+        });
+        cookies.set('token',token);
+        cookies.set('username',userName);
+        cookies.set('fullName',fullName);
+        cookies.set('userId',userId);
+
+        if (isSignup) {
+            cookies.set('phoneNumber',phoneNumber);
+            cookies.set('avatarURL',avatarURL);
+            cookies.set('hashedPassword',hashedPassword);
+        }
+
+        window.location.reload(); // reloading our page so in app.jsx it will get loggedin in the <Auth> line
+        
+
     }
 
+
     const switchMode = () => {
-        setIsSignup((prevIsSignup) => !prevIsSignup );
+        setIsSignup((prevIsSignup) => !prevIsSignup 
+        );
     }
   return (
     <div className='auth__form-container'>
